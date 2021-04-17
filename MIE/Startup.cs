@@ -57,6 +57,7 @@ namespace MIE
 
             // 依赖注入
             services.AddScoped<IUserDao, UserDaoImpl>();
+            services.AddScoped<IBlogDao, BlogDaoImpl>();
             services.AddScoped<IAuthUtil, AuthUtil>();
         }
 

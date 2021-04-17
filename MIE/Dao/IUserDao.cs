@@ -10,5 +10,6 @@ namespace MIE.Dao
         User GetUserByUsername(string username);
 
         bool AddUser(User user);
+
     }
 }

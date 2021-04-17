@@ -13,6 +13,8 @@ namespace MIE
 
         public virtual DbSet<User> User {get; set;}
 
+        public virtual DbSet<Blog> Blog { get; set; }
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

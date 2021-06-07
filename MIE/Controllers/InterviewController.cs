@@ -31,7 +31,8 @@ namespace MIE.Controllers
         public string GetMyInterverw()
         {
             int userId = authUtil.GetIdFromToken();
-            reservationDao
+            return "";
+            // reservationDao
         }
 
         

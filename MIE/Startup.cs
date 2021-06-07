@@ -1,14 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,14 +48,13 @@ namespace MIE
                   };
               });
 
-            services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
-
             // 依赖注入
             services.AddScoped<IUserDao, UserDaoImpl>();
             services.AddScoped<IBlogDao, BlogDaoImpl>();
             services.AddScoped<IAuthUtil, AuthUtil>();
             services.AddScoped<IReservationDao, ReservationDaoImpl>();
             services.AddScoped<IAvailableTimeDao, AvailableTimeDaoImpl>();
+            services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
         }
 
         // 使用该方法配置Http请求管道

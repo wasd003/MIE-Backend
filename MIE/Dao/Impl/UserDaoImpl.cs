@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using MIE.Entity;
 
@@ -17,6 +17,7 @@ namespace MIE.Dao.Impl
         public bool AddUser(User user)
         {
             context.Add(user);
+
             return context.SaveChanges() > 0;
         }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using MIE.Entity;
 
 namespace MIE.Dao.Impl
@@ -16,6 +17,11 @@ namespace MIE.Dao.Impl
         {
             context.Reservation.Add(reservation);
             return context.SaveChanges() > 0;
+        }
+
+        public List<Reservation> GetReservations(int userId)
+        {
+            throw new NotImplementedException();
         }
     }
 }

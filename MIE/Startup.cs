@@ -59,6 +59,8 @@ namespace MIE
             services.AddScoped<IUserDao, UserDaoImpl>();
             services.AddScoped<IBlogDao, BlogDaoImpl>();
             services.AddScoped<IAuthUtil, AuthUtil>();
+            services.AddScoped<IReservationDao, ReservationDaoImpl>();
+            services.AddScoped<IAvailableTimeDao, AvailableTimeDaoImpl>();
         }
 
         // 使用该方法配置Http请求管道

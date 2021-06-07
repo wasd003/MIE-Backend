@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MIE.Entity
@@ -7,6 +8,7 @@ namespace MIE.Entity
     public class Blog
     {
         [Column("blog_id")]
+        [Key]
         public int BlogId { get; set; }
         [Column("user_id")]
         public int UserId { get; set; }

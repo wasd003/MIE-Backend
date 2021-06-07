@@ -11,6 +11,8 @@
     <Folder Include="Dao\" />
     <Folder Include="Dao\Impl\" />
     <Folder Include="Utils\" />
+    <Folder Include="Entity\Enum\" />
+    <Folder Include="Dto\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="10.1.1" />

@@ -11,9 +11,15 @@ namespace MIE
 
         }
 
-        public virtual DbSet<User> User {get; set;}
+        public virtual DbSet<User> User { get; set; }
 
         public virtual DbSet<Blog> Blog { get; set; }
+
+        public virtual DbSet<AvailableTime> AvailableTime {get; set;}
+
+        public virtual DbSet<Quiz> Quizz { get; set; }
+
+        public virtual DbSet<Reservation> Reservation { get; set; }
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

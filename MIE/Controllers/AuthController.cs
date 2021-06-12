@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MIE.Dao;
 using MIE.Entity;
+using MIE.Entity.Enum;
 using MIE.Utils;
+using StackExchange.Redis;
 
 
 namespace MIE.Controllers
@@ -16,11 +18,13 @@ namespace MIE.Controllers
     {
         private readonly IUserDao userDao;
         private readonly IAuthUtil authUtil;
+        private readonly IConnectionMultiplexer redis;
 
-        public AuthController(IUserDao userDao, IAuthUtil authUtil)
+        public AuthController(IUserDao userDao, IAuthUtil authUtil, IConnectionMultiplexer redis)
         {
             this.userDao = userDao;
             this.authUtil = authUtil;
+            this.redis = redis;
         }
 
         [HttpPost("login")]
@@ -33,27 +37,28 @@ namespace MIE.Controllers
                 return Ok(ResponseUtil.SuccessfulResponse("成功登陆",
                     new { token = authUtil.GetToken(tar) }));
             else
-                return Ok(ResponseUtil.ErrorResponse(10000, "用户名或密码错误"));
+                return Ok(ResponseUtil.ErrorResponse(ResponseEnum.WrongUsernameOrPwd()));
         }
 
         [HttpPost("register")]
         public IActionResult Register([FromBody] User user)
         {
             if (user.Password == null || user.Password.Length < 6 || user.Username == null)
-                return Ok(ResponseUtil.ErrorResponse(10001, "密码太短或者用户名为空"));
+                return Ok(ResponseUtil.ErrorResponse(ResponseEnum.ShortPwdOrEmptyUsername()));
             if (userDao.GetUserByUsername(user.Username) != null)
-                return Ok(ResponseUtil.ErrorResponse(10002, "用户已存在"));
+                return Ok(ResponseUtil.ErrorResponse(ResponseEnum.DuplicateUser()));
 
             bool addRes = userDao.AddUser(user);
             return addRes ? Ok(ResponseUtil.SuccessfulResponse("注册成功")) :
-                      Ok(ResponseUtil.ErrorResponse(10003, "注册失败"));
+                      Ok(ResponseUtil.ErrorResponse(ResponseEnum.FailToRegister()));
         }
 
         [Authorize]
         [HttpGet]
         public IActionResult TestToken()
         {
-            return Ok(new { id = authUtil.GetIdFromToken() });
+            IDatabase db = redis.GetDatabase();
+            return Ok(new { id = authUtil.GetIdFromToken()});
         }
     }
 }

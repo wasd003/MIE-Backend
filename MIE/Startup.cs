@@ -13,6 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 using MIE.Dao;
 using MIE.Dao.Impl;
 using MIE.Utils;
+using StackExchange.Redis;
 
 namespace MIE
 {
@@ -51,10 +52,13 @@ namespace MIE
             // 依赖注入
             services.AddScoped<IUserDao, UserDaoImpl>();
             services.AddScoped<IBlogDao, BlogDaoImpl>();
-            services.AddScoped<IAuthUtil, AuthUtil>();
             services.AddScoped<IReservationDao, ReservationDaoImpl>();
             services.AddScoped<IAvailableTimeDao, AvailableTimeDaoImpl>();
+            services.AddScoped<IQuizDao, QuizDaoImpl>();
+            services.AddScoped<IAuthUtil, AuthUtil>();
             services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(Configuration.GetConnectionString("RedisConnection")));
+
         }
 
         // 使用该方法配置Http请求管道
@@ -78,5 +82,6 @@ namespace MIE
                 endpoints.MapControllers();
             });
         }
+
     }
 }

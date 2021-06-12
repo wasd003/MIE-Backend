@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using MIE.Entity;
 
 namespace MIE.Dao.Impl
@@ -20,8 +21,6 @@ namespace MIE.Dao.Impl
         }
 
         public List<Reservation> GetReservations(int userId)
-        {
-            throw new NotImplementedException();
-        }
+             => context.Reservation.Where(cur => cur.UserAId == userId || cur.UserBId == userId).ToList();
     }
 }

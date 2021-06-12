@@ -8,6 +8,10 @@ using MIE.Dao;
 using MIE.Dto;
 using MIE.Entity;
 using MIE.Utils;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using StackExchange.Redis;
+using MIE.Entity.Enum;
 
 namespace MIE.Controllers
 {
@@ -17,48 +21,93 @@ namespace MIE.Controllers
         private readonly IAvailableTimeDao availableTimeDao;
         private readonly IAuthUtil authUtil;
         private readonly IReservationDao reservationDao;
+        private readonly IQuizDao quizDao;
+        private readonly IUserDao userDao;
+        private readonly IDatabase redis;
 
-        public InterviewController(IAvailableTimeDao availableTimeDao, IAuthUtil authUtil, IReservationDao reservationDao)
+        public InterviewController(IAvailableTimeDao availableTimeDao, IAuthUtil authUtil,
+            IReservationDao reservationDao, IQuizDao quizDao,
+            IUserDao userDao, IConnectionMultiplexer connectionMultiplexer)
         {
             this.availableTimeDao = availableTimeDao;
             this.authUtil = authUtil;
             this.reservationDao = reservationDao;
+            this.quizDao = quizDao;
+            this.userDao = userDao;
+            this.redis = connectionMultiplexer.GetDatabase();
         }
-        
+
+        [HttpGet("myreservations")]
+        [Authorize]
+        public IActionResult GetMyReservations()
+        {
+            int userId = authUtil.GetIdFromToken();
+            var reservationList = reservationDao.GetReservations(userId);
+            IList<ReservationDto> res = new List<ReservationDto>();
+            foreach (var cur in reservationList)
+                res.Add(ReservationDto.ToDto(cur, cur.UserBId == userId));
+            return Ok(ResponseUtil.SuccessfulResponse("获取所有预约成功", res));
+        }
+
+        [HttpGet("allreservations")]
+        public IActionResult GetAllReservations()
+        {
+            List<AvailableTime> allTime = availableTimeDao.GetAllTime();
+            List<ReservationCount> res = new List<ReservationCount>();
+            foreach(var curTime in allTime) {
+                DateTime baseDate = DateTimeUtil.ConcateDateTime(DateTime.Now, curTime.StartTime);
+                for (int i = 0; i < 7; i ++ )
+                {
+                    DateTime date = baseDate.AddDays(i);
+                    string dateStr = date.ToString();
+                    if (!redis.KeyExists(dateStr)) res.Add(new ReservationCount(date, 0, curTime.TimeId));
+                    else
+                    {
+                        int cnt = (int)redis.ListLength(dateStr);
+                        res.Add(new ReservationCount(date, cnt, curTime.TimeId));
+                    }
+                }
+            }
+            res.Sort();
+            return Ok(ResponseUtil.SuccessfulResponse("成功获取从当前开始7天内的预约消息", res));
+        }
+
 
         [HttpPost]
         [Authorize]
-        public string GetMyInterverw()
+        public IActionResult PostReservation([FromBody] PostReservationDto reservationDto)
         {
+            AvailableTime time = availableTimeDao.GetByTimeId(reservationDto.TimeId);
+            if (time == null)
+                return Ok(ResponseUtil.ErrorResponse(ResponseEnum.NoAvailableTime()));
+            if (!DateTimeUtil.DateMatch(reservationDto.Date))
+                return Ok(ResponseUtil.ErrorResponse(ResponseEnum.WrongDateformat()));
             int userId = authUtil.GetIdFromToken();
-            return "";
-            // reservationDao
+            string dateStr = DateTimeUtil.GetDateStr(reservationDto.Date, time.StartTime);
+            int length = (int)redis.ListLength(dateStr);
+            if (length % 2 == 0)
+            {
+                redis.ListRightPush(dateStr, userId);
+            }
+            else
+            {
+                // TODO: 推荐题目
+                // TODO: 随机roll一个题目有可能id不存在
+                int quizaId = new Random().Next(10);
+                int quizbId = new Random().Next(10);
+                Quiz quiza = quizDao.GetQuizById(quizaId);
+                Quiz quizb = quizDao.GetQuizById(quizbId);
+                int oppUserid = (int)redis.ListGetByIndex(dateStr, length - 2);
+                User oppUser = userDao.GetUserById(oppUserid);
+                User curUser = userDao.GetUserById(userId);
+                DateTime reserveDate = DateTime.Parse(reservationDto.Date);
+                Reservation tar = new Reservation(time, quiza, quizb, oppUser, curUser, reserveDate);
+                reservationDao.AddReservation(tar);
+                // 确认预约信息插入成功后再修改redis
+                redis.ListRightPush(dateStr, userId);
+            }
+            return Ok(ResponseUtil.SuccessfulResponse("预约成功"));
         }
 
-        
-        [HttpPost]
-        [Authorize]
-        public IActionResult PostReservation([FromBody] ReservationDto reservationDto)
-        {
-            AvailableTime time = availableTimeDao.GetByTime(reservationDto.StartTime, reservationDto.EndTime);
-            if (time == null) return NotFound("无可用预约时间");
-            int userId = authUtil.GetIdFromToken();
-            //TODO: 推荐题目
-            int quizId = new Random().Next(50);
-            Reservation tar = new Reservation(time.TimeId, quizId, userId, reservationDto.ReserveDate);
-            return Ok(new { result = reservationDao.AddReservation(tar) });
-        }
-
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
     }
 }

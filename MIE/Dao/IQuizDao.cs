@@ -8,5 +8,8 @@ namespace MIE.Dao
     {
         Quiz GetQuizById(int id);
 
+        List<Quiz> GetQuizByPageId(int pageId);
+
+        List<Quiz> GetAllQuizzes();
     }
 }

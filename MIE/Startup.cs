@@ -55,6 +55,7 @@ namespace MIE
             services.AddScoped<IReservationDao, ReservationDaoImpl>();
             services.AddScoped<IAvailableTimeDao, AvailableTimeDaoImpl>();
             services.AddScoped<IQuizDao, QuizDaoImpl>();
+            services.AddScoped<ISubmissionDao, SubmissionDaoImpl>();
             services.AddScoped<IAuthUtil, AuthUtil>();
             services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(Configuration.GetConnectionString("RedisConnection")));

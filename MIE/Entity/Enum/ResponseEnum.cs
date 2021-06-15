@@ -38,5 +38,15 @@ namespace MIE.Entity.Enum
 
         public static ResponseEnum WrongDateformat()
             => new ResponseEnum(20001, "日期格式不正确，正确格式为MM/dd/yyyy");
+
+        /**
+         * 题目模块相关异常
+         * 返回码以3开头
+         */
+        public static ResponseEnum NegativePageId()
+            => new ResponseEnum(30000, "页号不能为负数");
+
+        public static ResponseEnum QuizNotExist()
+            => new ResponseEnum(30001, "题目不存在");
     }
 }

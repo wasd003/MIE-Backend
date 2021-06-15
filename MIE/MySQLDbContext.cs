@@ -21,6 +21,8 @@ namespace MIE
 
         public virtual DbSet<Reservation> Reservation { get; set; }
 
+        public virtual DbSet<Submission> Submission { get; set; }
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -37,7 +39,10 @@ namespace MIE
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-
+            modelBuilder
+                .Entity<Submission>()
+                .Property(e => e.JudgeResult)
+                .HasColumnType("nvarchar(48)");
         }
     }
 }

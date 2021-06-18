@@ -36,7 +36,7 @@ namespace MIE
 
             services.AddDbContext<MySQLDbContext>(option =>
             {
-                option.UseMySQL(Configuration.GetConnectionString("MySqlConnection"));
+                option.UseMySQL(Configuration["ConnectionStrings:MySqlConnection"]);
             });
 
             services
@@ -68,8 +68,7 @@ namespace MIE
             services.AddScoped<ISubmissionDao, SubmissionDaoImpl>();
             services.AddScoped<IAuthUtil, AuthUtil>();
             services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
-            services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(Configuration.GetConnectionString("RedisConnection")));
-
+            services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(Configuration["ConnectionStrings:RedisConnection"]));
         }
 
         // 使用该方法配置Http请求管道

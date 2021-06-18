@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Globalization;
+using System.Threading;
 using MIE.Entity;
 
 namespace MIE.Dto
@@ -9,6 +11,7 @@ namespace MIE.Dto
 
         public ReservationDto(Reservation r, int iamB)
         {
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("");
             ReserveDate = r.ReserveDate.ToShortDateString();
             StartTime = r.StartTime.ToLongTimeString();
             EndTime = r.EndTime.ToLongTimeString();

@@ -12,6 +12,7 @@ using MIE.Entity;
 using MIE.Entity.Enum;
 using MIE.Utils;
 using Newtonsoft.Json;
+using StackExchange.Redis;
 
 namespace MIE.Controllers
 {
@@ -21,12 +22,15 @@ namespace MIE.Controllers
         private readonly IQuizDao quizDao;
         private readonly IAuthUtil authUtil;
         private readonly ISubmissionDao submissionDao;
+        private readonly IDatabase redis;
 
-        public QuizController(IQuizDao quizDao, IAuthUtil authUtil, ISubmissionDao submissionDao)
+        public QuizController(IQuizDao quizDao, IAuthUtil authUtil, ISubmissionDao submissionDao,
+            IConnectionMultiplexer connectionMultiplexer)
         {
             this.quizDao = quizDao;
             this.authUtil = authUtil;
             this.submissionDao = submissionDao;
+            this.redis = connectionMultiplexer.GetDatabase();
         }
 
         [HttpGet]
@@ -35,6 +39,34 @@ namespace MIE.Controllers
             if (pageId < 0) return Ok(ResponseUtil.ErrorResponse(ResponseEnum.NegativePageId()));
             var res = quizDao.GetQuizByPageId(pageId);
             return Ok(ResponseUtil.SuccessfulResponse("成功获取数据", res));
+        }
+
+        [HttpGet("recommend/lrmodel")]
+        [Authorize]
+        public async Task<IActionResult> RecommendQuizByModelAsync()
+        {
+            int userId = authUtil.GetIdFromToken();
+            string key = "recommend/" + userId;
+            if (!redis.KeyExists(key))  // new suer, cold start, use default category
+            {
+                foreach (var cur in Constants.DEFAULT_RECOMMEND)
+                {
+                    redis.ListRightPush(key, cur);
+                }
+            }
+            int n = (int)redis.ListLength(key); 
+            List<Quiz> quizList = new List<Quiz>();
+            for (int i = 0; i < n; i ++ )  // get candidate categoryId
+            {
+                int categoryId = (int)redis.ListGetByIndex(key, i);
+                quizList.AddRange(quizDao.GetByCategoryId(categoryId, Constants.CANDIDATES_COUNT));
+            }
+            var pred = await quizDao.PredictByLrAsync(userId, quizList);
+            List<Quiz> res = new List<Quiz>();
+            for (int i = 0; i < pred.Count; i++)
+                if (pred[i].Item1 == true)
+                    res.Add(pred[i].Item2);
+            return Ok(ResponseUtil.SuccessfulResponse("推荐成功", res));
         }
 
         [HttpGet("concrete")]
@@ -73,7 +105,7 @@ namespace MIE.Controllers
             }
             res = res.OrderByDescending(x => x.Item1).ToList();
             List<Quiz> ans = new List<Quiz>();
-            for (int i = 0; i < Constants.MAX_SEARCH_COUNT; i ++ )
+            for (int i = 0; i < Constants.MAX_SEARCH_COUNT; i++)
             {
                 if (i >= res.Count || res[i].Item1 == 0) break;
                 ans.Add(res[i].Item2);
@@ -99,12 +131,13 @@ namespace MIE.Controllers
             string result;
             using (var client = new HttpClient())
             {
-                var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");                
+                var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
                 result = client.PostAsync(Constants.JUDGE_MACHINE_URL, content)
                     .Result.Content.ReadAsStringAsync().Result;
             }
             var ans = JsonConvert.DeserializeObject<SubmitResultDto>(result);
             submission.JudgeResult = Enum.Parse<JudgeResultEnum>(ans.Result);
+            submission.CategoryId = quiz.CategoryId;
             submissionDao.InsertSubmission(submission);
             return Ok(ResponseUtil.SuccessfulResponse("判题成功", ans));
         }
@@ -119,6 +152,31 @@ namespace MIE.Controllers
                 ans.Add(SubmissionGetDto.ToDto(x));
             return Ok(ResponseUtil.SuccessfulResponse("获取提交记录成功", ans));
         }
-        
+
+        [HttpGet("recommend")]
+        [Authorize]
+        public IActionResult RecommendQuizzes()
+        {
+            int userId = authUtil.GetIdFromToken();
+            string key = "recommend/" + userId;
+            if (!redis.KeyExists(key))
+            {
+                foreach (var cur in Constants.DEFAULT_RECOMMEND)
+                {
+                    redis.ListRightPush(key, cur);
+                }
+            }
+            int n = (int)redis.ListLength(key);
+            int[] categoryIdList = new int[n];
+            for (int i = 0; i < n; i++) categoryIdList[i] = (int)redis.ListGetByIndex(key, i);
+            var score = submissionDao.GetScore(userId, categoryIdList);
+            List<Quiz> res = new List<Quiz>();
+            for (int i = 0; i < 5 && i < score.Count; i ++ )
+            {
+                res.AddRange(quizDao.GetByCategoryId(score[i].Item2, 5 - i));
+            }
+            return Ok(ResponseUtil.SuccessfulResponse("推荐成功", res));
+        }
+
     }
 }

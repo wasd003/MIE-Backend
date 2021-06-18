@@ -7,6 +7,7 @@ namespace MIE.Entity.Enum
         WA,
         TLE,
         CE,
-        IE
+        IE,
+        RE
     }
 }

@@ -16,6 +16,9 @@ namespace MIE.Entity
         [Column("user_id")]
         public int UserId { get; set; }
 
+        [Column("category_id")]
+        public int CategoryId { get; set; }
+
         [Column("code")]
         public string Code { get; set; }
 

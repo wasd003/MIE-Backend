@@ -7,6 +7,15 @@ namespace MIE.Entity
     [Table("submission")]
     public class Submission
     {
+        public Submission(int quizId, int userId, int categoryId, string code, JudgeResultEnum judgeResult)
+        {
+            QuizId = quizId;
+            UserId = userId;
+            CategoryId = categoryId;
+            Code = code;
+            JudgeResult = judgeResult;
+        }
+
         [Column("submission_id")]
         public int SubmissionId { get; set; }
 
@@ -24,6 +33,8 @@ namespace MIE.Entity
 
         [Column("judge_result")]
         public JudgeResultEnum JudgeResult { get; set; }
+
+
 
     }
 }

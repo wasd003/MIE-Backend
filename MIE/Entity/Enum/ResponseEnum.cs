@@ -29,6 +29,9 @@ namespace MIE.Entity.Enum
         public static ResponseEnum FailToRegister()
             => new ResponseEnum(10003, "注册失败，后台数据库相关错误");
 
+        public static ResponseEnum UserNotFound()
+            => new ResponseEnum(10004, "用户不存在");
+
         /**
          * 预约模块相关异常
          * 返回码以2开头
@@ -48,5 +51,14 @@ namespace MIE.Entity.Enum
 
         public static ResponseEnum QuizNotExist()
             => new ResponseEnum(30001, "题目不存在");
+
+        public static ResponseEnum NotSupportLang()
+            => new ResponseEnum(30002, "不支持的语言");
+
+        /**
+         * 博客模块
+         */
+        public static ResponseEnum NoTitle()
+            => new ResponseEnum(40000, "不能没有标题");
     }
 }

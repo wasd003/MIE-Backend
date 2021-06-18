@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using Elasticsearch.Net;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -10,9 +11,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using MIE.Config;
 using MIE.Dao;
 using MIE.Dao.Impl;
 using MIE.Utils;
+using Nest;
 using StackExchange.Redis;
 
 namespace MIE
@@ -48,6 +51,13 @@ namespace MIE
                       ClockSkew = TimeSpan.Zero
                   };
               });
+
+            // 注册ElasticSearch设定
+            services.Configure<ElasticSearchConfig>(Configuration.GetSection("B2bElasticSearch"));
+            // 注入ElasticSearch连接池
+            services.AddSingleton<IConnectionPool, B2bElasticConnectionPool>();
+            // 注入ElasticSearch Client
+            services.AddScoped<IElasticClient, B2bElasticClient>();
 
             // 依赖注入
             services.AddScoped<IUserDao, UserDaoImpl>();

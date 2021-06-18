@@ -11,6 +11,7 @@ using MIE.Dto;
 using MIE.Entity;
 using MIE.Entity.Enum;
 using MIE.Utils;
+using Nest;
 using Newtonsoft.Json;
 using StackExchange.Redis;
 
@@ -23,14 +24,16 @@ namespace MIE.Controllers
         private readonly IAuthUtil authUtil;
         private readonly ISubmissionDao submissionDao;
         private readonly IDatabase redis;
+        private readonly IElasticClient elasticClient;
 
         public QuizController(IQuizDao quizDao, IAuthUtil authUtil, ISubmissionDao submissionDao,
-            IConnectionMultiplexer connectionMultiplexer)
+            IConnectionMultiplexer connectionMultiplexer, IElasticClient elasticClient)
         {
             this.quizDao = quizDao;
             this.authUtil = authUtil;
             this.submissionDao = submissionDao;
             this.redis = connectionMultiplexer.GetDatabase();
+            this.elasticClient = elasticClient;
         }
 
         [HttpGet]
@@ -41,7 +44,7 @@ namespace MIE.Controllers
             return Ok(ResponseUtil.SuccessfulResponse("成功获取数据", res));
         }
 
-        [HttpGet("recommend/lrmodel")]
+        [HttpGet("api/recommend")]
         [Authorize]
         public async Task<IActionResult> RecommendQuizByModelAsync()
         {
@@ -67,6 +70,22 @@ namespace MIE.Controllers
                 if (pred[i].Item1 == true)
                     res.Add(pred[i].Item2);
             return Ok(ResponseUtil.SuccessfulResponse("推荐成功", res));
+        }
+
+        [HttpGet("api/search")]
+        public IActionResult SearchQuizByElasticSearch([FromQuery] string query)
+        {
+            var searchResponse = elasticClient.Search<Quiz>(s => s
+                .From(0)
+                .Size(Constants.MAX_SEARCH_COUNT)
+                .Query(q => q
+                     .Match(m => m
+                        .Field(f => f.QuizName)
+                        .Query(query)
+                     )
+                )
+            );
+            return Ok(ResponseUtil.SuccessfulResponse("搜索成功", searchResponse));
         }
 
         [HttpGet("concrete")]
@@ -115,17 +134,23 @@ namespace MIE.Controllers
 
         [HttpPost("submit")]
         [Authorize]
-        public IActionResult OnlineJudge([FromBody] Submission submission)
+        public IActionResult OnlineJudge([FromBody] SubmissionPostDto submissionPostDto)
         {
-            submission.UserId = authUtil.GetIdFromToken();
-            Quiz quiz = quizDao.GetQuizById(submission.QuizId);
+            submissionPostDto.Lang = submissionPostDto.Lang.ToLower();
+            if (!Constants.SUPPORT_LANG.Contains(submissionPostDto.Lang))
+            {
+                return Ok(ResponseUtil.ErrorResponse(ResponseEnum.NotSupportLang()));
+            }
+            int userId = authUtil.GetIdFromToken();
+            Quiz quiz = quizDao.GetQuizById(submissionPostDto.QuizId);
             var body = new
             {
-                code = submission.Code,
+                code = submissionPostDto.Code,
                 input = quiz.TestCaseIn,
                 expected = quiz.TestCaseOut,
-                userId = submission.UserId,
-                quizId = quiz.QuizId
+                userId = userId,
+                quizId = quiz.QuizId,
+                lang = submissionPostDto.Lang
             };
             string jsonBody = JsonConvert.SerializeObject(body);
             string result;
@@ -136,8 +161,8 @@ namespace MIE.Controllers
                     .Result.Content.ReadAsStringAsync().Result;
             }
             var ans = JsonConvert.DeserializeObject<SubmitResultDto>(result);
-            submission.JudgeResult = Enum.Parse<JudgeResultEnum>(ans.Result);
-            submission.CategoryId = quiz.CategoryId;
+            Submission submission = new Submission(submissionPostDto.QuizId, userId, quiz.CategoryId,
+                submissionPostDto.Code, Enum.Parse<JudgeResultEnum>(ans.Result));
             submissionDao.InsertSubmission(submission);
             return Ok(ResponseUtil.SuccessfulResponse("判题成功", ans));
         }

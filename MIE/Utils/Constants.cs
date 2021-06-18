@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+
 namespace MIE.Utils
 {
     public class Constants
@@ -20,5 +22,7 @@ namespace MIE.Utils
         public static int CANDIDATES_COUNT = 5;
 
         public static string REMOTE_MODEL_ADDR = "www.wasd003.cn/home/mie/models/";
+
+        public static HashSet<string> SUPPORT_LANG = new HashSet<string>() { "cpp", "js" };
     }
 }

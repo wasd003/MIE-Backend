@@ -16,5 +16,7 @@ namespace MIE.Dao
         List<Quiz> GetByCategoryId(int category, int cnt);
 
         Task<List<Tuple<bool, Quiz>>> PredictByLrAsync(int userId, List<Quiz> quizzes);
+
+        Quiz GetQuizByIndex(int index);
     }
 }

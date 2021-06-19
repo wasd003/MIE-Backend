@@ -14,6 +14,8 @@
     <Folder Include="Entity\Enum\" />
     <Folder Include="Dto\" />
     <Folder Include="Config\" />
+    <Folder Include="Service\" />
+    <Folder Include="Service\impl\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="10.1.1" />

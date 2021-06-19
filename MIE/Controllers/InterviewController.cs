@@ -1,17 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MIE.Dao;
 using MIE.Dto;
 using MIE.Entity;
 using MIE.Utils;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using StackExchange.Redis;
 using MIE.Entity.Enum;
+using MIE.Service;
+using System.Threading.Tasks;
 
 namespace MIE.Controllers
 {
@@ -24,10 +23,11 @@ namespace MIE.Controllers
         private readonly IQuizDao quizDao;
         private readonly IUserDao userDao;
         private readonly IDatabase redis;
+        private readonly IRecommend recommendService;
 
         public InterviewController(IAvailableTimeDao availableTimeDao, IAuthUtil authUtil,
             IReservationDao reservationDao, IQuizDao quizDao,
-            IUserDao userDao, IConnectionMultiplexer connectionMultiplexer)
+            IUserDao userDao, IConnectionMultiplexer connectionMultiplexer, IRecommend recommend)
         {
             this.availableTimeDao = availableTimeDao;
             this.authUtil = authUtil;
@@ -35,6 +35,40 @@ namespace MIE.Controllers
             this.quizDao = quizDao;
             this.userDao = userDao;
             this.redis = connectionMultiplexer.GetDatabase();
+            recommendService = recommend;
+        }
+
+        [HttpPost("api/match")]
+        [Authorize]
+        public async Task<IActionResult> MatchAsync([FromBody] PostReservationDto reservationDto)
+        {
+            AvailableTime time = availableTimeDao.GetByTimeId(reservationDto.TimeId);
+            if (time == null)
+                return Ok(ResponseUtil.ErrorResponse(ResponseEnum.NoAvailableTime()));
+            if (!DateTimeUtil.DateMatch(reservationDto.Date))
+                return Ok(ResponseUtil.ErrorResponse(ResponseEnum.WrongDateformat()));
+            int userId = authUtil.GetIdFromToken();
+            string dateStr = DateTimeUtil.GetDateStr(reservationDto.Date, time.StartTime);
+            int length = (int)redis.ListLength(dateStr);
+            if (length % 2 == 0)
+            {
+                redis.ListRightPush(dateStr, userId);
+            }
+            else
+            {
+                int oppUserid = (int)redis.ListGetByIndex(dateStr, length - 2);
+                var quizAList = await recommendService.RecommendAsync(userId);
+                var quizBList = await recommendService.RecommendAsync(oppUserid);
+                User oppUser = userDao.GetUserById(oppUserid);
+                User curUser = userDao.GetUserById(userId);
+                Quiz quiza = quizAList[0]; Quiz quizb = quizBList[0];
+                DateTime reserveDate = DateTime.Parse(reservationDto.Date);
+                Reservation tar = new Reservation(time, quiza, quizb, oppUser, curUser, reserveDate);
+                reservationDao.AddReservation(tar);
+                // 确认预约信息插入成功后再修改redis
+                redis.ListRightPush(dateStr, userId);
+            }
+            return Ok(ResponseUtil.SuccessfulResponse("预约成功"));
         }
 
         [HttpGet("myreservations")]
@@ -91,12 +125,8 @@ namespace MIE.Controllers
             }
             else
             {
-                // TODO: 推荐题目
-                // TODO: 随机roll一个题目有可能id不存在
-                int quizaId = new Random().Next(10);
-                int quizbId = new Random().Next(10);
-                Quiz quiza = quizDao.GetQuizById(quizaId);
-                Quiz quizb = quizDao.GetQuizById(quizbId);
+                Quiz quiza = quizDao.GetQuizByIndex(authUtil.GetQuizIndex());
+                Quiz quizb = quizDao.GetQuizByIndex(authUtil.GetQuizIndex());
                 int oppUserid = (int)redis.ListGetByIndex(dateStr, length - 2);
                 User oppUser = userDao.GetUserById(oppUserid);
                 User curUser = userDao.GetUserById(userId);
@@ -107,6 +137,16 @@ namespace MIE.Controllers
                 redis.ListRightPush(dateStr, userId);
             }
             return Ok(ResponseUtil.SuccessfulResponse("预约成功"));
+        }
+
+        [HttpPost("test")]
+        public IActionResult test()
+        {
+            for (int i = 0;i < 700; i ++ )
+            {
+                quizDao.GetQuizByIndex(i);
+            }
+            return Ok();
         }
 
     }

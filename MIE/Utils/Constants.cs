@@ -24,5 +24,7 @@ namespace MIE.Utils
         public static string REMOTE_MODEL_ADDR = "www.wasd003.cn/home/mie/models/";
 
         public static HashSet<string> SUPPORT_LANG = new HashSet<string>() { "cpp", "js" };
+
+        public static int QUIZ_COUNT = 500;
     }
 }

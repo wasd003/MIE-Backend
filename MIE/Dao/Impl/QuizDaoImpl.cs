@@ -86,6 +86,10 @@ namespace MIE.Dao.Impl
             return res;
         }
 
-        
+        public Quiz GetQuizByIndex(int index)
+        {
+            List<Quiz> quizList = context.Quiz.Skip(index).Take(1).ToList();
+            return quizList[0];
+        }
     }
 }

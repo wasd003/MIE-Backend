@@ -10,6 +10,7 @@ using MIE.Dao;
 using MIE.Dto;
 using MIE.Entity;
 using MIE.Entity.Enum;
+using MIE.Service;
 using MIE.Utils;
 using Nest;
 using Newtonsoft.Json;
@@ -25,15 +26,17 @@ namespace MIE.Controllers
         private readonly ISubmissionDao submissionDao;
         private readonly IDatabase redis;
         private readonly IElasticClient elasticClient;
+        private readonly IRecommend recommendService;
 
         public QuizController(IQuizDao quizDao, IAuthUtil authUtil, ISubmissionDao submissionDao,
-            IConnectionMultiplexer connectionMultiplexer, IElasticClient elasticClient)
+            IConnectionMultiplexer connectionMultiplexer, IElasticClient elasticClient, IRecommend recommend)
         {
             this.quizDao = quizDao;
             this.authUtil = authUtil;
             this.submissionDao = submissionDao;
             this.redis = connectionMultiplexer.GetDatabase();
             this.elasticClient = elasticClient;
+            recommendService = recommend;
         }
 
         [HttpGet]
@@ -49,26 +52,7 @@ namespace MIE.Controllers
         public async Task<IActionResult> RecommendQuizByModelAsync()
         {
             int userId = authUtil.GetIdFromToken();
-            string key = "recommend/" + userId;
-            if (!redis.KeyExists(key))  // new suer, cold start, use default category
-            {
-                foreach (var cur in Constants.DEFAULT_RECOMMEND)
-                {
-                    redis.ListRightPush(key, cur);
-                }
-            }
-            int n = (int)redis.ListLength(key); 
-            List<Quiz> quizList = new List<Quiz>();
-            for (int i = 0; i < n; i ++ )  // get candidate categoryId
-            {
-                int categoryId = (int)redis.ListGetByIndex(key, i);
-                quizList.AddRange(quizDao.GetByCategoryId(categoryId, Constants.CANDIDATES_COUNT));
-            }
-            var pred = await quizDao.PredictByLrAsync(userId, quizList);
-            List<Quiz> res = new List<Quiz>();
-            for (int i = 0; i < pred.Count; i++)
-                if (pred[i].Item1 == true)
-                    res.Add(pred[i].Item2);
+            var res = await recommendService.RecommendAsync(userId);
             return Ok(ResponseUtil.SuccessfulResponse("推荐成功", res));
         }
 

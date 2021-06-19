@@ -14,6 +14,8 @@ using Microsoft.IdentityModel.Tokens;
 using MIE.Config;
 using MIE.Dao;
 using MIE.Dao.Impl;
+using MIE.Service;
+using MIE.Service.impl;
 using MIE.Utils;
 using Nest;
 using StackExchange.Redis;
@@ -67,6 +69,7 @@ namespace MIE
             services.AddScoped<IQuizDao, QuizDaoImpl>();
             services.AddScoped<ISubmissionDao, SubmissionDaoImpl>();
             services.AddScoped<IAuthUtil, AuthUtil>();
+            services.AddScoped<IRecommend, RecommendImpl>();
             services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(Configuration["ConnectionStrings:RedisConnection"]));
         }

@@ -49,10 +49,10 @@ namespace MIE.Controllers
 
         [HttpGet("api/recommend")]
         [Authorize]
-        public async Task<IActionResult> RecommendQuizByModelAsync()
+        public IActionResult RecommendQuizByModelAsync()
         {
             int userId = authUtil.GetIdFromToken();
-            var res = await recommendService.RecommendAsync(userId);
+            var res = recommendService.Recommend(userId);
             return Ok(ResponseUtil.SuccessfulResponse("推荐成功", res));
         }
 

@@ -16,6 +16,7 @@
     <Folder Include="Config\" />
     <Folder Include="Service\" />
     <Folder Include="Service\impl\" />
+    <Folder Include="MLModels\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="10.1.1" />
@@ -28,6 +29,11 @@
     <PackageReference Include="Microsoft.ML" Version="1.5.5" />
     <PackageReference Include="NEST" Version="7.13.1" />
     <PackageReference Include="MarkdownSharp" Version="2.0.5" />
+    <PackageReference Include="Microsoft.Extensions.ML" Version="1.5.5" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Microsoft.Extensions.ML" />
+    <None Remove="MLModels\" />
   </ItemGroup>
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
 </Project>

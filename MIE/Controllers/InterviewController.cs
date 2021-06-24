@@ -40,7 +40,7 @@ namespace MIE.Controllers
 
         [HttpPost("api/match")]
         [Authorize]
-        public async Task<IActionResult> MatchAsync([FromBody] PostReservationDto reservationDto)
+        public IActionResult Match([FromBody] PostReservationDto reservationDto)
         {
             AvailableTime time = availableTimeDao.GetByTimeId(reservationDto.TimeId);
             if (time == null)
@@ -57,8 +57,8 @@ namespace MIE.Controllers
             else
             {
                 int oppUserid = (int)redis.ListGetByIndex(dateStr, length - 2);
-                var quizAList = await recommendService.RecommendAsync(userId);
-                var quizBList = await recommendService.RecommendAsync(oppUserid);
+                var quizAList = recommendService.Recommend(userId);
+                var quizBList = recommendService.Recommend(oppUserid);
                 User oppUser = userDao.GetUserById(oppUserid);
                 User curUser = userDao.GetUserById(userId);
                 Quiz quiza = quizAList[0]; Quiz quizb = quizBList[0];

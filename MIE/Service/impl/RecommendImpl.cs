@@ -19,7 +19,7 @@ namespace MIE.Service.impl
             this.quizDao = quizDao;
         }
 
-        public async Task<List<Quiz>> RecommendAsync(int userId)
+        public List<Quiz> Recommend(int userId)
         {
             string key = "recommend/" + userId;
             if (!redis.KeyExists(key))  // new suer, cold start, use default category
@@ -36,7 +36,7 @@ namespace MIE.Service.impl
                 int categoryId = (int)redis.ListGetByIndex(key, i);
                 quizList.AddRange(quizDao.GetByCategoryId(categoryId, Constants.CANDIDATES_COUNT));
             }
-            var pred = await quizDao.PredictByLrAsync(userId, quizList);
+            var pred = quizDao.PredictByLr(userId, quizList);
             List<Quiz> res = new List<Quiz>();
             for (int i = 0; i < pred.Count; i++)
                 if (pred[i].Item1 == true)

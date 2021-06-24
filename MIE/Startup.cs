@@ -14,11 +14,13 @@ using Microsoft.IdentityModel.Tokens;
 using MIE.Config;
 using MIE.Dao;
 using MIE.Dao.Impl;
+using Microsoft.Extensions.ML;
 using MIE.Service;
 using MIE.Service.impl;
 using MIE.Utils;
 using Nest;
 using StackExchange.Redis;
+using MIE.Entity;
 
 namespace MIE
 {
@@ -60,7 +62,9 @@ namespace MIE
             services.AddSingleton<IConnectionPool, B2bElasticConnectionPool>();
             // 注入ElasticSearch Client
             services.AddScoped<IElasticClient, B2bElasticClient>();
-
+            // 注册PredictionEnginePool，线上排序预测
+            services.AddPredictionEnginePool<SubmissionDetail, QuizPrediction>()
+                .FromFile("MLModels/QuizRecommenderModel.zip");
             // 依赖注入
             services.AddScoped<IUserDao, UserDaoImpl>();
             services.AddScoped<IBlogDao, BlogDaoImpl>();

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.Extensions.ML;
 using Microsoft.ML;
 using MIE.Entity;
 using MIE.Utils;
@@ -13,10 +14,12 @@ namespace MIE.Dao.Impl
     public class QuizDaoImpl : IQuizDao
     {
         private readonly MySQLDbContext context;
+        private readonly PredictionEnginePool<SubmissionDetail, QuizPrediction> predictionEnginePool;
 
-        public QuizDaoImpl(MySQLDbContext context)
+        public QuizDaoImpl(MySQLDbContext context, PredictionEnginePool<SubmissionDetail, QuizPrediction> predictionEnginePool)
         {
             this.context = context;
+            this.predictionEnginePool = predictionEnginePool;
         }
 
         // 获取用户对某题的提交记录数据统计
@@ -65,22 +68,13 @@ namespace MIE.Dao.Impl
             return context.Quiz.Where(cur => cur.CategoryId == category).Take(cnt).ToList();
         }
 
-        public async Task<List<Tuple<bool, Quiz>>> PredictByLrAsync(int userId, List<Quiz> quizzes)
+        public List<Tuple<bool, Quiz>> PredictByLr(int userId, List<Quiz> quizzes)
         {
-            MLContext mlContext = new MLContext();
-            DataViewSchema modelSchema;
-            ITransformer model;
-            using (HttpClient client = new HttpClient())
-            {
-                Stream modelFile = await client.GetStreamAsync(Constants.REMOTE_MODEL_ADDR);
-                model = mlContext.Model.Load(modelFile, out modelSchema);
-            }
-            var predictionFunction = mlContext.Model.CreatePredictionEngine<SubmissionDetail, QuizPrediction>(model);
             List<Tuple<bool, Quiz>> res = new List<Tuple<bool, Quiz>>();
             foreach (var quiz in quizzes)
             {
                 var submissionDetail = GetSubmissionDetail(userId, quiz.QuizId);
-                var resultPrediction = predictionFunction.Predict(submissionDetail);
+                var resultPrediction = predictionEnginePool.Predict(submissionDetail);
                 res.Add(Tuple.Create(resultPrediction.Prediction, quiz));
             }
             return res;

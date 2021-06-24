@@ -7,6 +7,6 @@ namespace MIE.Service
 {
     public interface IRecommend
     {
-        Task<List<Quiz>> RecommendAsync(int userid);
+        List<Quiz> Recommend(int userid);
     }
 }

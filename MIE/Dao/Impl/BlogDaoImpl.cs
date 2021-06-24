@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using MIE.Entity;
 using MIE.Utils;
 
@@ -23,7 +24,8 @@ namespace MIE.Dao.Impl
 
         public List<Blog> GetBlogByPageId(int pageId)
         {
-            return context.Blog.Skip(pageId).Take(Constants.PAGE_SIZE).ToList();
+            return context.Blog.Skip(pageId).Take(Constants.PAGE_SIZE).Include(cur => cur.User).
+                ToList();
         }
 
         public List<Blog> GetBlogListByUserId(int userId)

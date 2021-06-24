@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MIE.Dao;
+using MIE.Dto;
 using MIE.Entity;
 using MIE.Entity.Enum;
 using MIE.Utils;
@@ -27,11 +28,13 @@ namespace MIE.Controllers
         [HttpGet]
         public IActionResult Get([FromQuery] int pageId)
         {
-            List <Blog> res = blogDao.GetBlogByPageId(pageId);
+            List <Blog> blogs = blogDao.GetBlogByPageId(pageId);
             var markdown = new MarkdownSharp.Markdown();
-            for (int i = 0; i < res.Count; i ++ )
+            List<BlogGetDto> res = new List<BlogGetDto>();
+            for (int i = 0; i < blogs.Count; i ++ )
             {
-                res[i].Content = markdown.Transform(res[i].Content);
+                blogs[i].Content = markdown.Transform(blogs[i].Content);
+                res.Add(BlogGetDto.toDto(blogs[i]));
             }
             return Ok(ResponseUtil.SuccessfulResponse($"成功获取第{pageId}页博客", res));
         }

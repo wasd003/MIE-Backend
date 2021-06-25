@@ -83,6 +83,8 @@ namespace MIE.Controllers
         [HttpGet("search")]
         public IActionResult SearchQuizzes([FromQuery] string q)
         {
+            if (string.IsNullOrEmpty(q))
+                return Ok(ResponseUtil.ErrorResponse(ResponseEnum.EmptyQ()));
             List<Quiz> quizzes = quizDao.GetAllQuizzes();
             var df = new Dictionary<char, int>();
             var res = new List<Tuple<double, Quiz>>();

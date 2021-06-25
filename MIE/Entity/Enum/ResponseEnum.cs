@@ -60,5 +60,8 @@ namespace MIE.Entity.Enum
          */
         public static ResponseEnum NoTitle()
             => new ResponseEnum(40000, "不能没有标题");
+
+        public static ResponseEnum EmptyQ()
+            => new ResponseEnum(40001, "搜索参数不能为空");
     }
 }

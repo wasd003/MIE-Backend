@@ -30,7 +30,11 @@ namespace MIE.Dao.Impl
 
         public List<Blog> GetBlogListByUserId(int userId)
         {
-            return context.Blog.Where(cur => cur.UserId == userId).ToList();
+            return context.Blog.Where(cur => cur.UserId == userId)
+                .Include(cur => cur.User).ToList();
         }
+
+
+        public List<Blog> GetAllBlogs() => context.Blog.ToList();
     }
 }

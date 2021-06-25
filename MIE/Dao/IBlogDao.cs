@@ -11,5 +11,8 @@ namespace MIE.Dao
         List<Blog> GetBlogListByUserId(int userId);
 
         List<Blog> GetBlogByPageId(int pageId);
+
+        List<Blog> GetAllBlogs();
+
     }
 }

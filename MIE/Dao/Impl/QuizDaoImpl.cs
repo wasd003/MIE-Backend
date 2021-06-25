@@ -14,12 +14,12 @@ namespace MIE.Dao.Impl
     public class QuizDaoImpl : IQuizDao
     {
         private readonly MySQLDbContext context;
-        private readonly PredictionEnginePool<SubmissionDetail, QuizPrediction> predictionEnginePool;
+        // private readonly PredictionEnginePool<SubmissionDetail, QuizPrediction> predictionEnginePool;
 
-        public QuizDaoImpl(MySQLDbContext context, PredictionEnginePool<SubmissionDetail, QuizPrediction> predictionEnginePool)
+        public QuizDaoImpl(MySQLDbContext context)
         {
             this.context = context;
-            this.predictionEnginePool = predictionEnginePool;
+            // this.predictionEnginePool = predictionEnginePool;
         }
 
         // 获取用户对某题的提交记录数据统计
@@ -71,12 +71,12 @@ namespace MIE.Dao.Impl
         public List<Tuple<bool, Quiz>> PredictByLr(int userId, List<Quiz> quizzes)
         {
             List<Tuple<bool, Quiz>> res = new List<Tuple<bool, Quiz>>();
-            foreach (var quiz in quizzes)
-            {
-                var submissionDetail = GetSubmissionDetail(userId, quiz.QuizId);
-                var resultPrediction = predictionEnginePool.Predict(submissionDetail);
-                res.Add(Tuple.Create(resultPrediction.Prediction, quiz));
-            }
+            //foreach (var quiz in quizzes)
+            //{
+            //    var submissionDetail = GetSubmissionDetail(userId, quiz.QuizId);
+            //    var resultPrediction = predictionEnginePool.Predict(submissionDetail);
+            //    res.Add(Tuple.Create(resultPrediction.Prediction, quiz));
+            //}
             return res;
         }
 

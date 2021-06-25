@@ -21,6 +21,7 @@ using MIE.Utils;
 using Nest;
 using StackExchange.Redis;
 using MIE.Entity;
+using System.IO;
 
 namespace MIE
 {
@@ -63,8 +64,9 @@ namespace MIE
             // 注入ElasticSearch Client
             services.AddScoped<IElasticClient, B2bElasticClient>();
             // 注册PredictionEnginePool，线上排序预测
-            services.AddPredictionEnginePool<SubmissionDetail, QuizPrediction>()
-                .FromFile("MLModels/QuizRecommenderModel.zip");
+            //services.AddPredictionEnginePool<SubmissionDetail, QuizPrediction>()
+            //    .FromFile(Path.Combine(Environment.CurrentDirectory, "MLModels", "QuizRecommenderModel.zip"));
+
             // 依赖注入
             services.AddScoped<IUserDao, UserDaoImpl>();
             services.AddScoped<IBlogDao, BlogDaoImpl>();

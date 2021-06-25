@@ -26,5 +26,7 @@ namespace MIE.Utils
         public static HashSet<string> SUPPORT_LANG = new HashSet<string>() { "cpp", "js" };
 
         public static int QUIZ_COUNT = 500;
+
+        public static int RANDOM_COUNTS = 10;
     }
 }

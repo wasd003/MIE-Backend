@@ -18,11 +18,13 @@ namespace MIE.Controllers
     {
         private readonly IBlogDao blogDao;
         private readonly IAuthUtil authUtil;
+        private readonly IUserDao userDao;
 
-        public BlogController(IBlogDao blogDao, IAuthUtil authUtil)
+        public BlogController(IBlogDao blogDao, IAuthUtil authUtil, IUserDao userDao)
         {
             this.blogDao = blogDao;
             this.authUtil = authUtil;
+            this.userDao = userDao;
         }
 
         [HttpGet]
@@ -99,15 +101,38 @@ namespace MIE.Controllers
                 res.Add(Tuple.Create(score, blog));
             }
             res = res.OrderByDescending(x => x.Item1).ToList();
-            List<Blog> ans = new List<Blog>();
+            List<BlogGetDto> ans = new List<BlogGetDto>();
             var markdown = new MarkdownSharp.Markdown();
+            var h = new Dictionary<int, User>();
             for (int i = 0; i < Constants.MAX_SEARCH_COUNT; i++)
             {
                 if (i >= res.Count || res[i].Item1 == 0) break;
                 res[i].Item2.Content = markdown.Transform(res[i].Item2.Content);
-                ans.Add(res[i].Item2);
+                int id = res[i].Item2.UserId;
+                if (!h.ContainsKey(id)) h[id] = userDao.GetUserById(id);
+                res[i].Item2.User = h[id];
+                ans.Add(BlogGetDto.toDto(res[i].Item2));
             }
             return Ok(ResponseUtil.SuccessfulResponse("成功搜索", ans));
+        }
+
+        [HttpGet("random")]
+        public IActionResult GetRandomBlogs()
+        {
+            List<BlogGetDto> ans = new List<BlogGetDto>();
+            Random r = new Random();
+            int total = blogDao.GetBlogCount();
+            if (total < Constants.RANDOM_COUNTS)
+                return Ok(ResponseUtil.SuccessfulResponse(
+                    $"数量不足{Constants.RANDOM_COUNTS}", blogDao.GetAllBlogDto()));
+            int diff = total / Constants.RANDOM_COUNTS;
+            for (int i = 0; i < total && ans.Count < Constants.RANDOM_COUNTS; i += diff)
+            {
+                int skip = r.Next(i, Math.Min(total, i + diff));
+                var cur = blogDao.GetBlogDtoBySkip(skip);
+                if (cur != null) ans.Add(cur);
+            }
+            return Ok(ResponseUtil.SuccessfulResponse("成功获得随机博客", ans));
         }
     }
 }

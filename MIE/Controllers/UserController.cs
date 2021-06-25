@@ -33,7 +33,13 @@ namespace MIE.Controllers
             if (user == null) return Ok(ResponseUtil.ErrorResponse(ResponseEnum.UserNotFound()));
             return Ok(ResponseUtil.SuccessfulResponse("成功获得个人信息", user));
         }
-        
+
+        [HttpGet("search")]
+        public IActionResult SearchUserByContainStrategy([FromQuery] string q)
+        {
+            var res = userDao.SearchUserByContainStrategy(q);
+            return Ok(ResponseUtil.SuccessfulResponse("搜索成功", res));
+        }
 
     }
 }

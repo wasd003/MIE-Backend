@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using MIE.Entity;
 
@@ -29,6 +30,11 @@ namespace MIE.Dao.Impl
         public User GetUserByUsername(string username)
         {
             return context.User.FirstOrDefault(x => x.Username == username);
+        }
+
+        public List<User> SearchUserByContainStrategy(string q)
+        {
+            return context.User.Where(cur => cur.Username.Contains(q)).ToList();
         }
     }
 }
